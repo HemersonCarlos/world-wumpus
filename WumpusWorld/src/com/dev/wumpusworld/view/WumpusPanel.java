@@ -145,7 +145,7 @@ public class WumpusPanel extends JPanel implements KeyListener {
 		case 'k': // Shoot downward
 			if (wumpusPlayer.isArrow()) {
 				wumpusPlayer.setArrow(false);
-				for (int y = wumpusPlayer.getRowPosition(); y <= 9; y++) {
+				for (int y = wumpusPlayer.getRowPosition(); y < 10; y++) {
 					if (wumpusMap.getSquare(y, wumpusPlayer.getColumnPosition()).isWumpus()) {
 						System.out.println("Wumpus killed.");
 						wumpusKilled = true;
@@ -169,7 +169,7 @@ public class WumpusPanel extends JPanel implements KeyListener {
 		case 'l': // Shoot right
 			if (wumpusPlayer.isArrow()) {
 				wumpusPlayer.setArrow(false);
-				for (int x = wumpusPlayer.getColumnPosition(); x <= 9; x++) {
+				for (int x = wumpusPlayer.getColumnPosition(); x < 10; x++) {
 					if (wumpusMap.getSquare(wumpusPlayer.getRowPosition(), x).isWumpus()) {
 						System.out.println("Wumpus killed.");
 						wumpusKilled = true;
