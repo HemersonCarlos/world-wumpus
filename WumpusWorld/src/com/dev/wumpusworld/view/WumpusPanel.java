@@ -3,6 +3,8 @@ package com.dev.wumpusworld.view;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
@@ -15,7 +17,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
-public class WumpusPanel extends JPanel implements KeyListener {
+public class WumpusPanel extends JPanel implements KeyListener, ActionListener {
 
 	public static final int PLAYING = 0;
 	public static final int DEAD = 2;
@@ -91,92 +93,28 @@ public class WumpusPanel extends JPanel implements KeyListener {
 
 		switch (keyEvent.getKeyChar()) {
 		case 'w':
-			if (status == PLAYING) {
-				if (wumpusPlayer.getRowPosition() - 1 >= 0) {
-					wumpusKilled = false;
-					wumpusPlayer.setRowPosition(wumpusPlayer.getRowPosition() - 1);
-					wumpusPlayer.setDirection(WumpusPlayer.NORTH);
-					wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
-				}
-			}
+			this.moveNorth();
 			break;
 		case 's':
-			if (status == PLAYING) {
-				if (wumpusPlayer.getRowPosition() + 1 < 10) {
-					wumpusKilled = false;
-					wumpusPlayer.setRowPosition(wumpusPlayer.getRowPosition() + 1);
-					wumpusPlayer.setDirection(WumpusPlayer.SOUTH);
-					wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
-				}
-			}
+			this.moveSouth();
 			break;
 		case 'a':
-			if (status == PLAYING) {
-				if (wumpusPlayer.getColumnPosition() - 1 >= 0) {
-					wumpusKilled = false;
-					wumpusPlayer.setColumnPosition(wumpusPlayer.getColumnPosition() - 1);
-					wumpusPlayer.setDirection(WumpusPlayer.WEST);
-					wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
-				}
-			}
+			this.moveWest();
 			break;
 		case 'd':
-			if (status == PLAYING) {
-				if (wumpusPlayer.getColumnPosition() + 1 < 10) {
-					wumpusKilled = false;
-					wumpusPlayer.setColumnPosition(wumpusPlayer.getColumnPosition() + 1);
-					wumpusPlayer.setDirection(WumpusPlayer.EAST);
-					wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
-				}
-			}
+			this.moveEast();
 			break;
-		case 'i': // Shoot upward
-			if (wumpusPlayer.isArrow()) {
-				wumpusPlayer.setArrow(false);
-				for (int y = wumpusPlayer.getRowPosition(); y >= 0; y--) {
-					if (wumpusMap.getSquare(y, wumpusPlayer.getColumnPosition()).isWumpus()) {
-						System.out.println("Wumpus killed.");
-						wumpusKilled = true;
-						wumpusMap.getSquare(y, wumpusPlayer.getColumnPosition()).setDeadWumpus(true);
-					}
-				}
-			}
+		case 'i': 
+			this.shootNorth();
 			break;
-		case 'k': // Shoot downward
-			if (wumpusPlayer.isArrow()) {
-				wumpusPlayer.setArrow(false);
-				for (int y = wumpusPlayer.getRowPosition(); y < 10; y++) {
-					if (wumpusMap.getSquare(y, wumpusPlayer.getColumnPosition()).isWumpus()) {
-						System.out.println("Wumpus killed.");
-						wumpusKilled = true;
-						wumpusMap.getSquare(y, wumpusPlayer.getColumnPosition()).setDeadWumpus(true);
-					}
-				}
-			}
+		case 'k':
+			this.shootSouth();
 			break;
-		case 'j': // Shoot left
-			if (wumpusPlayer.isArrow()) {
-				wumpusPlayer.setArrow(false);
-				for (int x = wumpusPlayer.getColumnPosition(); x >= 0; x--) {
-					if (wumpusMap.getSquare(wumpusPlayer.getRowPosition(), x).isWumpus()) {
-						System.out.println("Wumpus killed.");
-						wumpusKilled = true;
-						wumpusMap.getSquare(wumpusPlayer.getRowPosition(), x).setDeadWumpus(true);
-					}
-				}
-			}
+		case 'j':
+			this.shootWest();
 			break;
-		case 'l': // Shoot right
-			if (wumpusPlayer.isArrow()) {
-				wumpusPlayer.setArrow(false);
-				for (int x = wumpusPlayer.getColumnPosition(); x < 10; x++) {
-					if (wumpusMap.getSquare(wumpusPlayer.getRowPosition(), x).isWumpus()) {
-						System.out.println("Wumpus killed.");
-						wumpusKilled = true;
-						wumpusMap.getSquare(wumpusPlayer.getRowPosition(), x).setDeadWumpus(true);
-					}
-				}
-			}
+		case 'l':
+			this.shootEast();
 			break;
 		case 'c': // Climb ladder
 			if (wumpusPlayer.getRowPosition() == wumpusMap.getLadderRow() && wumpusPlayer.getColumnPosition() == wumpusMap.getLadderColumn() && wumpusPlayer.isGold()) {
@@ -184,16 +122,7 @@ public class WumpusPanel extends JPanel implements KeyListener {
 			}
 			break;
 		case 'p':
-			if (wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).isDeadWumpus()) {
-				wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setDeadWumpus(false);
-				wumpusPlayer.setWumpusCorpse(true);
-				System.out.println("Collected Wumpus corpse");
-			}
-
-			if (wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).isGold()) {
-				wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setGold(false);
-				wumpusPlayer.setGold(true);
-			}
+			this.collectElements();
 			break;
 		case 'n': // New game
 			if (status == WON || status == DEAD) {
@@ -220,13 +149,18 @@ public class WumpusPanel extends JPanel implements KeyListener {
 			System.out.println("Player is dead.");
 		}
 	}
+	
+	@Override
+	public void actionPerformed(ActionEvent actionEvent) {
+		
+	}
 
 	private void solve() {
 		while(!gameOver) {
 			System.out.println("Executando");
 			this.checkCurrentPoint(wumpusPlayer);
 			this.exploreOtherWay(wumpusPlayer, wumpusMap);
-			this.repaintGame();
+			repaint();
 			System.out.println("---------");
 			this.delayGame();
 		}	
@@ -255,29 +189,29 @@ public class WumpusPanel extends JPanel implements KeyListener {
 	}
 
 	private void exploreOtherWay(WumpusPlayer wumpusPlayer, WumpusMap wumpusMap) {
-		if (wumpusPlayer.getColumnPosition() + 1 < 10) {
-			if(this.isValidate(wumpusPlayer, wumpusMap)) {
-				this.moveEast();
-				return;
-			}
+		
+		if(this.isValidate(wumpusPlayer, wumpusMap)) {
+			System.out.println("Moving east..");
+			this.moveEast();
+			return;
 		}
-		if (wumpusPlayer.getRowPosition() - 1 >= 0) {
-			if(this.isValidate(wumpusPlayer, wumpusMap)) {
-				this.moveNorth();
-				return;
-			}
+		
+		if(this.isValidate(wumpusPlayer, wumpusMap)) {
+			System.out.println("Moving north..");
+			this.moveNorth();
+			return;
 		}
-		if (wumpusPlayer.getColumnPosition() - 1 >= 0) {
-			if(this.isValidate(wumpusPlayer, wumpusMap)) {
-				this.moveWest();
-				return;
-			}
+		
+		if(this.isValidate(wumpusPlayer, wumpusMap)) {
+			System.out.println("Moving west..");
+			this.moveWest();
+			return;
 		}
-		if (wumpusPlayer.getRowPosition() + 1 < 10) {
-			if(this.isValidate(wumpusPlayer, wumpusMap)) {
-				this.moveSouth();
-				return;
-			}
+		
+		if(this.isValidate(wumpusPlayer, wumpusMap)) {
+			System.out.println("Moving south..");
+			this.moveSouth();
+			return;
 		}
 	}
 
@@ -306,37 +240,97 @@ public class WumpusPanel extends JPanel implements KeyListener {
 	
 	private void moveEast() {
 		if (status == PLAYING) {
-			wumpusKilled = false;
-			wumpusPlayer.setColumnPosition(wumpusPlayer.getColumnPosition() + 1);
-			wumpusPlayer.setDirection(WumpusPlayer.EAST);
-			wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
+			if (wumpusPlayer.getColumnPosition() + 1 < 10) {
+				wumpusKilled = false;
+				wumpusPlayer.setColumnPosition(wumpusPlayer.getColumnPosition() + 1);
+				wumpusPlayer.setDirection(WumpusPlayer.EAST);
+				wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
+			}
 		}
 	}
 
 	private void moveNorth() {
 		if (status == PLAYING) {
-			wumpusKilled = false;
-			wumpusPlayer.setRowPosition(wumpusPlayer.getRowPosition() - 1);
-			wumpusPlayer.setDirection(WumpusPlayer.NORTH);
-			wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
+				if (wumpusPlayer.getRowPosition() - 1 >= 0) {
+				wumpusKilled = false;
+				wumpusPlayer.setRowPosition(wumpusPlayer.getRowPosition() - 1);
+				wumpusPlayer.setDirection(WumpusPlayer.NORTH);
+				wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
+			}
 		}
 	}
 	
 	private void moveWest() {
 		if (status == PLAYING) {
-			wumpusKilled = false;
-			wumpusPlayer.setColumnPosition(wumpusPlayer.getColumnPosition() - 1);
-			wumpusPlayer.setDirection(WumpusPlayer.WEST);
-			wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
+			if (wumpusPlayer.getColumnPosition() - 1 >= 0) {
+				wumpusKilled = false;
+				wumpusPlayer.setColumnPosition(wumpusPlayer.getColumnPosition() - 1);
+				wumpusPlayer.setDirection(WumpusPlayer.WEST);
+				wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
+			}
 		}
 	}
 	
 	private void moveSouth() {
 		if (status == PLAYING) {
-			wumpusKilled = false;
-			wumpusPlayer.setRowPosition(wumpusPlayer.getRowPosition() + 1);
-			wumpusPlayer.setDirection(WumpusPlayer.SOUTH);
-			wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
+			if (wumpusPlayer.getRowPosition() + 1 < 10) {
+				wumpusKilled = false;
+				wumpusPlayer.setRowPosition(wumpusPlayer.getRowPosition() + 1);
+				wumpusPlayer.setDirection(WumpusPlayer.SOUTH);
+				wumpusMap.getSquare(wumpusPlayer.getRowPosition(), wumpusPlayer.getColumnPosition()).setVisited(true);
+			}
+		}
+	}
+	
+	private void shootNorth() {
+		if (wumpusPlayer.isArrow()) {
+			wumpusPlayer.setArrow(false);
+			for (int y = wumpusPlayer.getRowPosition(); y >= 0; y--) {
+				if (wumpusMap.getSquare(y, wumpusPlayer.getColumnPosition()).isWumpus()) {
+					System.out.println("Wumpus killed.");
+					wumpusKilled = true;
+					wumpusMap.getSquare(y, wumpusPlayer.getColumnPosition()).setDeadWumpus(true);
+				}
+			}
+		}
+	}
+	
+	private void shootEast() {
+		if (wumpusPlayer.isArrow()) {
+			wumpusPlayer.setArrow(false);
+			for (int x = wumpusPlayer.getColumnPosition(); x < 10; x++) {
+				if (wumpusMap.getSquare(wumpusPlayer.getRowPosition(), x).isWumpus()) {
+					System.out.println("Wumpus killed.");
+					wumpusKilled = true;
+					wumpusMap.getSquare(wumpusPlayer.getRowPosition(), x).setDeadWumpus(true);
+				}
+			}
+		}
+	}
+	
+	private void shootWest() {
+		if (wumpusPlayer.isArrow()) {
+			wumpusPlayer.setArrow(false);
+			for (int x = wumpusPlayer.getColumnPosition(); x >= 0; x--) {
+				if (wumpusMap.getSquare(wumpusPlayer.getRowPosition(), x).isWumpus()) {
+					System.out.println("Wumpus killed.");
+					wumpusKilled = true;
+					wumpusMap.getSquare(wumpusPlayer.getRowPosition(), x).setDeadWumpus(true);
+				}
+			}
+		}
+	}
+	
+	private void shootSouth() {
+		if (wumpusPlayer.isArrow()) {
+			wumpusPlayer.setArrow(false);
+			for (int y = wumpusPlayer.getRowPosition(); y < 10; y++) {
+				if (wumpusMap.getSquare(y, wumpusPlayer.getColumnPosition()).isWumpus()) {
+					System.out.println("Wumpus killed.");
+					wumpusKilled = true;
+					wumpusMap.getSquare(y, wumpusPlayer.getColumnPosition()).setDeadWumpus(true);
+				}
+			}
 		}
 	}
 
@@ -351,10 +345,6 @@ public class WumpusPanel extends JPanel implements KeyListener {
 			wumpusPlayer.setGold(true);
 			System.out.println("Collected gold");
 		}
-	}
-
-	private void repaintGame() {
-		repaint();
 	}
 
 	private void delayGame() {
